@@ -1,0 +1,8 @@
+[package]
+authors = ["Caio Gomes <caiocodes@proton.me>"]
+name = "logto-rs"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+
+[dependencies]
