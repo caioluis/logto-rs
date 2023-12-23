@@ -20,6 +20,26 @@ enum ReservedScopes {
     OpenId,
 }
 
+enum UserScopes {
+    CustomData,
+    Email,
+    Identities,
+    Phone,
+    Profile,
+}
+
+impl UserScopes {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::CustomData => "custom_data",
+            Self::Email => "email",
+            Self::Identities => "identities",
+            Self::Phone => "phone",
+            Self::Profile => "profile",
+        }
+    }
+}
+
 impl ReservedScopes {
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -33,6 +53,7 @@ fn with_default_scopes(mut scopes: Option<Vec<String>>) -> Vec<String> {
     let default_scopes: Vec<String> = vec![
         ReservedScopes::OpenId.as_str().to_owned(),
         ReservedScopes::OfflineAccess.as_str().to_owned(),
+        UserScopes::Profile.as_str().to_owned(),
     ];
 
     match scopes {
