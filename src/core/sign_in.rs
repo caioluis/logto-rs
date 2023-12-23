@@ -111,7 +111,7 @@ mod tests {
         if let Ok(uri) = generated_uri {
             assert_eq!(
                 uri,
-                "http://localhost:3001/oidc/sign-in?client_id=clientId&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&code_challenge=codeChallenge&code_challenge_method=S256&state=state&response_type=code&prompt=consent&scope=openid+offline_access+profile"
+                "http://localhost:3001/oidc/sign-in?client_id=clientId&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&code_challenge=codeChallenge&code_challenge_method=S256&state=state&response_type=code&scope=openid+offline_access+profile&prompt=consent"
             )
         }
     }
