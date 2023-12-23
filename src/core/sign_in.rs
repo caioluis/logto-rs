@@ -29,17 +29,22 @@ impl ReservedScopes {
     }
 }
 
-fn with_default_scopes(mut scopes: Vec<String>) -> Vec<String> {
+fn with_default_scopes(mut scopes: Option<Vec<String>>) -> Vec<String> {
     let default_scopes: Vec<String> = vec![
         ReservedScopes::OpenId.as_str().to_owned(),
         ReservedScopes::OfflineAccess.as_str().to_owned(),
     ];
 
-    scopes.extend(default_scopes);
-    scopes.sort_unstable();
-    scopes.dedup();
+    match scopes {
+        None => default_scopes,
+        Some(mut scopes) => {
+            scopes.extend(default_scopes);
+            scopes.sort_unstable();
+            scopes.dedup();
 
-    return scopes;
+            scopes
+        }
+    }
 }
 
 const CODE_CHALLENGE_METHOD: &str = "S256";
@@ -50,23 +55,6 @@ pub fn generate_signin_uri(
 ) -> Result<String, Box<dyn std::error::Error>> {
     let mut url = Url::parse(&options.authorization_endpoint)?;
 
-    let mut scopes_set = HashSet::<String>::new();
-    if let Some(scopes) = options.scopes {
-        let scopes_with_default = with_default_scopes(scopes);
-        for scope in scopes_with_default {
-            scopes_set.insert(scope);
-        }
-    }
-
-    let mut resources = Vec::new();
-    if options.resources.is_some() {
-        for resource in options.resources.unwrap() {
-            if !resources.contains(&resource) {
-                resources.push(resource);
-            }
-        }
-    }
-
     url.query_pairs_mut()
         .append_pair("client_id", &options.client_id)
         .append_pair("redirect_uri", &options.redirect_uri)
@@ -75,18 +63,24 @@ pub fn generate_signin_uri(
         .append_pair("state", &options.state)
         .append_pair("response_type", RESPONSE_TYPE)
         .append_pair(
-            "scopes",
-            scopes_set
-                .into_iter()
-                .collect::<Vec<String>>()
-                .join(" ")
-                .as_str(),
+            "scope",
+            with_default_scopes(options.scopes).join(" ").as_str(),
         )
-        .append_pair("resource", resources.join(" ").as_str())
         .append_pair(
             "prompt",
             &options.prompt.unwrap_or("consent".to_string()).to_string(),
         );
+
+    let mut resources = Vec::<String>::new();
+    if let Some(resources_list) = options.resources {
+        for resource in resources_list {
+            if !resources.contains(&resource) {
+                resources.push(resource);
+            }
+        }
+        url.query_pairs_mut()
+            .append_pair("resource", resources.join(" ").as_str());
+    }
 
     Ok(url.as_str().to_owned())
 }
