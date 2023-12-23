@@ -11,6 +11,7 @@ pub struct SignInUriGenerationOptions {
     scopes: Option<Vec<String>>,
     resources: Option<Vec<String>>,
     prompt: Option<String>,
+    interaction_mode: Option<String>,
 }
 
 enum ReservedScopes {
@@ -101,6 +102,11 @@ pub fn generate_signin_uri(
             .append_pair("resource", resources.join(" ").as_str());
     }
 
+    if let Some(interaction_mode) = options.interaction_mode {
+        url.query_pairs_mut()
+            .append_pair("interaction_mode", &interaction_mode);
+    }
+
     Ok(url.as_str().to_owned())
 }
 
@@ -121,6 +127,7 @@ mod tests {
             scopes: None,
             resources: None,
             prompt: None,
+            interaction_mode: None,
         });
 
         if let Ok(uri) = generated_uri {
@@ -164,6 +171,7 @@ mod tests {
             scopes: Some(vec![UserScopes::Email.as_str().to_owned()]),
             resources: Some(vec!["resource1".to_string(), "resource2".to_string()]),
             prompt: Some("login".to_string()),
+            interaction_mode: None,
         });
 
         if let Ok(uri) = generated_uri {
@@ -188,6 +196,51 @@ mod tests {
                     ),
                     ("resource".to_string(), "resource1 resource2".to_string()),
                     ("prompt".to_string(), "login".to_string()),
+                ]
+                .into_iter()
+                .collect();
+
+                assert_eq!(params, expected_params)
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_generate_signin_uri_with_interaction_mode() {
+        let generated_uri = generate_signin_uri(SignInUriGenerationOptions {
+            authorization_endpoint: "http://logto.dev/oidc/sign-in".to_string(),
+            client_id: "clientId".to_string(),
+            redirect_uri: "https://example.com/callback".to_string(),
+            code_challenge: "codeChallenge".to_string(),
+            state: "state".to_string(),
+            scopes: None,
+            resources: None,
+            prompt: None,
+            interaction_mode: Some("signUp".to_string()),
+        });
+
+        if let Ok(uri) = generated_uri {
+            let url = Url::parse(uri.as_str());
+            if let Ok(parsed_url) = url {
+                let params: HashMap<String, String> =
+                    parsed_url.query_pairs().into_owned().collect();
+
+                let expected_params: HashMap<String, String> = [
+                    ("client_id".to_string(), "clientId".to_string()),
+                    (
+                        "redirect_uri".to_string(),
+                        "https://example.com/callback".to_string(),
+                    ),
+                    ("code_challenge".to_string(), "codeChallenge".to_string()),
+                    ("code_challenge_method".to_string(), "S256".to_string()),
+                    ("response_type".to_string(), "code".to_string()),
+                    ("state".to_string(), "state".to_string()),
+                    (
+                        "scope".to_string(),
+                        "offline_access openid profile".to_string(),
+                    ),
+                    ("prompt".to_string(), "consent".to_string()),
+                    ("interaction_mode".to_string(), "signUp".to_string()),
                 ]
                 .into_iter()
                 .collect();
