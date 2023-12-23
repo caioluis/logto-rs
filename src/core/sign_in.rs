@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use reqwest::Url;
 use serde::Deserialize;
 
