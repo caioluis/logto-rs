@@ -33,6 +33,19 @@ mod tests {
         let generated_uri = generate_signout_uri(SignOutUriGenerationOptions {
             end_session_endpoint: "http://logto.dev/oidc/session/end".to_string(),
             client_id: "clientId".to_string(),
+            post_logout_redirect_uri: None,
+        });
+
+        if let Ok(uri) = generated_uri {
+            assert_eq!(uri, "http://logto.dev/oidc/session/end?client_id=clientId")
+        }
+    }
+
+    #[tokio::test]
+    async fn test_generate_signin_uri_with_redirect() {
+        let generated_uri = generate_signout_uri(SignOutUriGenerationOptions {
+            end_session_endpoint: "http://logto.dev/oidc/session/end".to_string(),
+            client_id: "clientId".to_string(),
             post_logout_redirect_uri: Some("http://example.com/callback".to_string()),
         });
 
