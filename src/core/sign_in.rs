@@ -82,7 +82,11 @@ pub fn generate_signin_uri(
                 .join(" ")
                 .as_str(),
         )
-        .append_pair("resource", resources.join(" ").as_str());
+        .append_pair("resource", resources.join(" ").as_str())
+        .append_pair(
+            "prompt",
+            &options.prompt.unwrap_or("consent".to_string()).to_string(),
+        );
 
     Ok(url.as_str().to_owned())
 }
