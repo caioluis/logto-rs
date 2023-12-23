@@ -49,8 +49,8 @@ impl ReservedScopes {
 
 fn with_default_scopes(mut scopes: Option<Vec<String>>) -> Vec<String> {
     let default_scopes: Vec<String> = vec![
-        ReservedScopes::OpenId.as_str().to_owned(),
         ReservedScopes::OfflineAccess.as_str().to_owned(),
+        ReservedScopes::OpenId.as_str().to_owned(),
         UserScopes::Profile.as_str().to_owned(),
     ];
 
@@ -106,12 +106,14 @@ pub fn generate_signin_uri(
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use super::*;
 
     #[tokio::test]
     async fn test_generate_signin_uri() {
         let generated_uri = generate_signin_uri(SignInUriGenerationOptions {
-            authorization_endpoint: "http://localhost:3001/oidc/sign-in".to_string(),
+            authorization_endpoint: "http://logto.dev/oidc/sign-in".to_string(),
             client_id: "clientId".to_string(),
             redirect_uri: "https://example.com/callback".to_string(),
             code_challenge: "codeChallenge".to_string(),
@@ -122,10 +124,76 @@ mod tests {
         });
 
         if let Ok(uri) = generated_uri {
-            assert_eq!(
-                uri,
-                "http://localhost:3001/oidc/sign-in?client_id=clientId&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&code_challenge=codeChallenge&code_challenge_method=S256&state=state&response_type=code&scope=openid+offline_access+profile&prompt=consent"
-            )
+            let url = Url::parse(uri.as_str());
+            if let Ok(parsed_url) = url {
+                let params: HashMap<String, String> =
+                    parsed_url.query_pairs().into_owned().collect();
+
+                let expected_params: HashMap<String, String> = [
+                    ("client_id".to_string(), "clientId".to_string()),
+                    (
+                        "redirect_uri".to_string(),
+                        "https://example.com/callback".to_string(),
+                    ),
+                    ("code_challenge".to_string(), "codeChallenge".to_string()),
+                    ("code_challenge_method".to_string(), "S256".to_string()),
+                    ("response_type".to_string(), "code".to_string()),
+                    ("state".to_string(), "state".to_string()),
+                    (
+                        "scope".to_string(),
+                        "offline_access openid profile".to_string(),
+                    ),
+                    ("prompt".to_string(), "consent".to_string()),
+                ]
+                .into_iter()
+                .collect();
+
+                assert_eq!(params, expected_params)
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_generate_signin_uri_with_optionals() {
+        let generated_uri = generate_signin_uri(SignInUriGenerationOptions {
+            authorization_endpoint: "http://logto.dev/oidc/sign-in".to_string(),
+            client_id: "clientId".to_string(),
+            redirect_uri: "https://example.com/callback".to_string(),
+            code_challenge: "codeChallenge".to_string(),
+            state: "state".to_string(),
+            scopes: Some(vec![UserScopes::Email.as_str().to_owned()]),
+            resources: Some(vec!["resource1".to_string(), "resource2".to_string()]),
+            prompt: Some("login".to_string()),
+        });
+
+        if let Ok(uri) = generated_uri {
+            let url = Url::parse(uri.as_str());
+            if let Ok(parsed_url) = url {
+                let params: HashMap<String, String> =
+                    parsed_url.query_pairs().into_owned().collect();
+
+                let expected_params: HashMap<String, String> = [
+                    ("client_id".to_string(), "clientId".to_string()),
+                    (
+                        "redirect_uri".to_string(),
+                        "https://example.com/callback".to_string(),
+                    ),
+                    ("code_challenge".to_string(), "codeChallenge".to_string()),
+                    ("code_challenge_method".to_string(), "S256".to_string()),
+                    ("response_type".to_string(), "code".to_string()),
+                    ("state".to_string(), "state".to_string()),
+                    (
+                        "scope".to_string(),
+                        "email offline_access openid profile".to_string(),
+                    ),
+                    ("resource".to_string(), "resource1 resource2".to_string()),
+                    ("prompt".to_string(), "login".to_string()),
+                ]
+                .into_iter()
+                .collect();
+
+                assert_eq!(params, expected_params)
+            }
         }
     }
 }
