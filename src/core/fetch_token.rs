@@ -23,11 +23,12 @@ async fn fetch_token_by_authorization_code(
     client: &Client,
     parameters: TokenByAuthorizationCodeParameters,
 ) -> Result<CodeTokenResponse, reqwest::Error> {
-    let mut params = vec![
+    let mut params: Vec<(&str, &str)> = vec![
         ("client_id", &parameters.client_id),
         ("code", &parameters.code),
         ("code_verifier", &parameters.code_verifier),
         ("redirect_uri", &parameters.redirect_uri),
+        ("grant_type", "authorization_code"),
     ];
 
     if let Some(resource) = &parameters.resource {
@@ -47,14 +48,27 @@ async fn fetch_token_by_authorization_code(
 
 #[cfg(test)]
 mod tests {
+    use mockito::Matcher;
+
     use super::*;
 
     #[tokio::test]
     async fn test_fetch_token_by_auth_code() {
         let mut server = mockito::Server::new();
+
+        let body_matchers = vec![
+            Matcher::UrlEncoded("client_id".into(), "client_id_value".into()),
+            Matcher::UrlEncoded("code".into(), "code_value".into()),
+            Matcher::UrlEncoded("code_verifier".into(), "code_verifier_value".into()),
+            Matcher::UrlEncoded("resource".into(), "resource_value".into()),
+            Matcher::UrlEncoded("grant_type".into(), "authorization_code".into()),
+        ];
+
         server
             .mock("POST", "/oidc/token")
-            .with_status(200)
+            .match_header("content-type", "application/x-www-form-urlencoded")
+            .match_body(Matcher::AllOf(body_matchers))
+            .with_status(201)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -66,6 +80,7 @@ mod tests {
                 }"#,
             )
             .create();
+
         let url = server.url();
 
         let expected_token_response = CodeTokenResponse {
