@@ -1,21 +1,23 @@
+use std::collections::HashMap;
+
 use reqwest::Client;
 use serde::Deserialize;
 
-struct TokenByAuthorizationCodeParameters {
-    token_endpoint: String,
-    code: String,
-    code_verifier: String,
-    client_id: String,
-    redirect_uri: String,
-    resource: Option<String>,
+struct TokenByAuthorizationCodeParameters<'a> {
+    token_endpoint: &'a str,
+    code: &'a str,
+    code_verifier: &'a str,
+    client_id: &'a str,
+    redirect_uri: &'a str,
+    resource: Option<&'a str>,
 }
 
 struct TokenByRefreshTokenParameters {
-    token_endpoint: String,
-    client_id: String,
-    refresh_token: String,
-    resource: Option<String>,
-    scopes: Option<Vec<String>>,
+    token_endpoint: &'static str,
+    client_id: &'static str,
+    refresh_token: &'static str,
+    resource: Option<&'static str>,
+    scopes: Option<Vec<&'static str>>,
 }
 
 // TODO: refactor this to a generic or something composed?
@@ -38,24 +40,23 @@ struct RefreshTokenTokenResponse {
     expires_in: i16,
 }
 
-async fn fetch_token_by_authorization_code(
+async fn fetch_token_by_authorization_code<'a>(
     client: &Client,
-    parameters: TokenByAuthorizationCodeParameters,
+    parameters: TokenByAuthorizationCodeParameters<'a>,
 ) -> Result<CodeTokenResponse, reqwest::Error> {
-    let mut params: Vec<(&str, &str)> = vec![
-        ("client_id", &parameters.client_id),
-        ("code", &parameters.code),
-        ("code_verifier", &parameters.code_verifier),
-        ("redirect_uri", &parameters.redirect_uri),
-        ("grant_type", "authorization_code"),
-    ];
+    let mut params = HashMap::new();
+    params.insert("client_id", parameters.client_id);
+    params.insert("code", parameters.code);
+    params.insert("code_verifier", parameters.code_verifier);
+    params.insert("redirect_uri", parameters.redirect_uri);
+    params.insert("grant_type", "authorization_code");
 
-    if let Some(resource) = &parameters.resource {
-        params.push(("resource", resource));
+    if let Some(resource) = parameters.resource {
+        params.insert("resource", resource);
     }
 
     let response = client
-        .post(&parameters.token_endpoint)
+        .post(parameters.token_endpoint)
         .form(&params)
         .send()
         .await?
@@ -69,18 +70,27 @@ async fn fetch_token_by_refresh_token(
     client: &Client,
     parameters: TokenByRefreshTokenParameters,
 ) -> Result<RefreshTokenTokenResponse, reqwest::Error> {
-    let mut params: Vec<(&str, &str)> = vec![
-        ("client_id", &parameters.client_id),
-        ("refresh_token", &parameters.refresh_token),
-        ("grant_type", "refresh_token"),
-    ];
+    let mut params = HashMap::new();
+    params.insert("client_id", parameters.client_id);
+    params.insert("refresh_token", parameters.refresh_token);
+    params.insert("grant_type", "refresh_token");
 
-    if let Some(resource) = &parameters.resource {
-        params.push(("resource", resource));
+    let scope = parameters
+        .scopes
+        .as_ref()
+        .map(|val| val.join(" "))
+        .unwrap_or_else(|| "".to_string());
+
+    if scope.len() > 0 {
+        params.insert("scope", scope.as_str());
+    }
+
+    if let Some(resource) = parameters.resource {
+        params.insert("resource", resource);
     }
 
     let response = client
-        .post(&parameters.token_endpoint)
+        .post(parameters.token_endpoint)
         .form(&params)
         .send()
         .await?
@@ -137,13 +147,15 @@ mod tests {
 
         let client = reqwest::Client::new();
 
+        let endpoint = format!("{}/oidc/token", url);
+
         let params = TokenByAuthorizationCodeParameters {
-            client_id: "client_id_value".to_string(),
-            token_endpoint: format!("{}/oidc/token", url),
-            redirect_uri: "https://localhost:3000/callback".to_string(),
-            code_verifier: "code_verifier_value".to_string(),
-            code: "code_value".to_string(),
-            resource: Some("resource_value".to_string()),
+            client_id: "client_id_value",
+            token_endpoint: endpoint.as_str(),
+            redirect_uri: "https://localhost:3000/callback",
+            code_verifier: "code_verifier_value",
+            code: "code_value",
+            resource: Some("resource_value"),
         };
 
         let response = fetch_token_by_authorization_code(&client, params).await;
