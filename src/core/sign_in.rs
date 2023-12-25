@@ -109,7 +109,7 @@ pub fn generate_signin_uri(
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, os::macos::raw};
+    use std::collections::HashMap;
 
     use super::*;
 
