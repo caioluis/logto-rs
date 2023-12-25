@@ -2,16 +2,16 @@ use reqwest::Url;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
-pub struct SignInUriGenerationOptions {
+pub struct SignInUriGenerationOptions<'a> {
     authorization_endpoint: String,
-    client_id: String,
-    redirect_uri: String,
-    code_challenge: String,
-    state: String,
-    scopes: Option<Vec<String>>,
-    resources: Option<Vec<String>>,
-    prompt: Option<String>,
-    interaction_mode: Option<String>,
+    client_id: &'a str,
+    redirect_uri: &'a str,
+    code_challenge: &'a str,
+    state: &'a str,
+    scopes: Option<Vec<&'a str>>,
+    resources: Option<Vec<&'a str>>,
+    prompt: Option<&'a str>,
+    interaction_mode: Option<&'a str>,
 }
 
 enum ReservedScopes {
@@ -48,11 +48,11 @@ impl ReservedScopes {
     }
 }
 
-fn with_default_scopes(mut scopes: Option<Vec<String>>) -> Vec<String> {
-    let default_scopes: Vec<String> = vec![
-        ReservedScopes::OfflineAccess.as_str().to_owned(),
-        ReservedScopes::OpenId.as_str().to_owned(),
-        UserScopes::Profile.as_str().to_owned(),
+fn with_default_scopes(mut scopes: Option<Vec<&str>>) -> Vec<&str> {
+    let default_scopes: Vec<&str> = vec![
+        ReservedScopes::OfflineAccess.as_str(),
+        ReservedScopes::OpenId.as_str(),
+        UserScopes::Profile.as_str(),
     ];
 
     match scopes {
@@ -86,12 +86,9 @@ pub fn generate_signin_uri(
             "scope",
             with_default_scopes(options.scopes).join(" ").as_str(),
         )
-        .append_pair(
-            "prompt",
-            &options.prompt.unwrap_or("consent".to_string()).to_string(),
-        );
+        .append_pair("prompt", &options.prompt.unwrap_or("consent"));
 
-    let mut resources = Vec::<String>::new();
+    let mut resources = Vec::<&str>::new();
     if let Some(resources_list) = options.resources {
         for resource in resources_list {
             if !resources.contains(&resource) {
@@ -107,12 +104,12 @@ pub fn generate_signin_uri(
             .append_pair("interaction_mode", &interaction_mode);
     }
 
-    Ok(url.as_str().to_owned())
+    Ok(url.to_string())
 }
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
+    use std::{collections::HashMap, os::macos::raw};
 
     use super::*;
 
@@ -120,10 +117,10 @@ mod tests {
     async fn test_generate_signin_uri() {
         let generated_uri = generate_signin_uri(SignInUriGenerationOptions {
             authorization_endpoint: "http://logto.dev/oidc/sign-in".to_string(),
-            client_id: "clientId".to_string(),
-            redirect_uri: "https://example.com/callback".to_string(),
-            code_challenge: "codeChallenge".to_string(),
-            state: "state".to_string(),
+            client_id: "clientId",
+            redirect_uri: "https://example.com/callback",
+            code_challenge: "codeChallenge",
+            state: "state",
             scopes: None,
             resources: None,
             prompt: None,
@@ -133,24 +130,23 @@ mod tests {
         if let Ok(uri) = generated_uri {
             let url = Url::parse(uri.as_str());
             if let Ok(parsed_url) = url {
-                let params: HashMap<String, String> =
+                let raw_params: HashMap<String, String> =
                     parsed_url.query_pairs().into_owned().collect();
 
-                let expected_params: HashMap<String, String> = [
-                    ("client_id".to_string(), "clientId".to_string()),
-                    (
-                        "redirect_uri".to_string(),
-                        "https://example.com/callback".to_string(),
-                    ),
-                    ("code_challenge".to_string(), "codeChallenge".to_string()),
-                    ("code_challenge_method".to_string(), "S256".to_string()),
-                    ("response_type".to_string(), "code".to_string()),
-                    ("state".to_string(), "state".to_string()),
-                    (
-                        "scope".to_string(),
-                        "offline_access openid profile".to_string(),
-                    ),
-                    ("prompt".to_string(), "consent".to_string()),
+                let params: HashMap<&str, &str> = raw_params
+                    .iter()
+                    .map(|(a, b)| (a.as_str(), b.as_str()))
+                    .collect();
+
+                let expected_params: HashMap<&str, &str> = [
+                    ("client_id", "clientId"),
+                    ("redirect_uri", "https://example.com/callback"),
+                    ("code_challenge", "codeChallenge"),
+                    ("code_challenge_method", "S256"),
+                    ("response_type", "code"),
+                    ("state", "state"),
+                    ("scope", "offline_access openid profile"),
+                    ("prompt", "consent"),
                 ]
                 .into_iter()
                 .collect();
@@ -164,38 +160,37 @@ mod tests {
     async fn test_generate_signin_uri_with_optionals() {
         let generated_uri = generate_signin_uri(SignInUriGenerationOptions {
             authorization_endpoint: "http://logto.dev/oidc/sign-in".to_string(),
-            client_id: "clientId".to_string(),
-            redirect_uri: "https://example.com/callback".to_string(),
-            code_challenge: "codeChallenge".to_string(),
-            state: "state".to_string(),
-            scopes: Some(vec![UserScopes::Email.as_str().to_owned()]),
-            resources: Some(vec!["resource1".to_string(), "resource2".to_string()]),
-            prompt: Some("login".to_string()),
+            client_id: "clientId",
+            redirect_uri: "https://example.com/callback",
+            code_challenge: "codeChallenge",
+            state: "state",
+            scopes: Some(vec![UserScopes::Email.as_str()]),
+            resources: Some(vec!["resource1", "resource2"]),
+            prompt: Some("login"),
             interaction_mode: None,
         });
 
         if let Ok(uri) = generated_uri {
             let url = Url::parse(uri.as_str());
             if let Ok(parsed_url) = url {
-                let params: HashMap<String, String> =
+                let raw_params: HashMap<String, String> =
                     parsed_url.query_pairs().into_owned().collect();
 
-                let expected_params: HashMap<String, String> = [
-                    ("client_id".to_string(), "clientId".to_string()),
-                    (
-                        "redirect_uri".to_string(),
-                        "https://example.com/callback".to_string(),
-                    ),
-                    ("code_challenge".to_string(), "codeChallenge".to_string()),
-                    ("code_challenge_method".to_string(), "S256".to_string()),
-                    ("response_type".to_string(), "code".to_string()),
-                    ("state".to_string(), "state".to_string()),
-                    (
-                        "scope".to_string(),
-                        "email offline_access openid profile".to_string(),
-                    ),
-                    ("resource".to_string(), "resource1 resource2".to_string()),
-                    ("prompt".to_string(), "login".to_string()),
+                let params: HashMap<&str, &str> = raw_params
+                    .iter()
+                    .map(|(a, b)| (a.as_str(), b.as_str()))
+                    .collect();
+
+                let expected_params: HashMap<&str, &str> = [
+                    ("client_id", "clientId"),
+                    ("redirect_uri", "https://example.com/callback"),
+                    ("code_challenge", "codeChallenge"),
+                    ("code_challenge_method", "S256"),
+                    ("response_type", "code"),
+                    ("state", "state"),
+                    ("scope", "email offline_access openid profile"),
+                    ("resource", "resource1 resource2"),
+                    ("prompt", "login"),
                 ]
                 .into_iter()
                 .collect();
@@ -209,38 +204,37 @@ mod tests {
     async fn test_generate_signin_uri_with_interaction_mode() {
         let generated_uri = generate_signin_uri(SignInUriGenerationOptions {
             authorization_endpoint: "http://logto.dev/oidc/sign-in".to_string(),
-            client_id: "clientId".to_string(),
-            redirect_uri: "https://example.com/callback".to_string(),
-            code_challenge: "codeChallenge".to_string(),
-            state: "state".to_string(),
+            client_id: "clientId",
+            redirect_uri: "https://example.com/callback",
+            code_challenge: "codeChallenge",
+            state: "state",
             scopes: None,
             resources: None,
             prompt: None,
-            interaction_mode: Some("signUp".to_string()),
+            interaction_mode: Some("signUp"),
         });
 
         if let Ok(uri) = generated_uri {
             let url = Url::parse(uri.as_str());
             if let Ok(parsed_url) = url {
-                let params: HashMap<String, String> =
+                let raw_params: HashMap<String, String> =
                     parsed_url.query_pairs().into_owned().collect();
 
-                let expected_params: HashMap<String, String> = [
-                    ("client_id".to_string(), "clientId".to_string()),
-                    (
-                        "redirect_uri".to_string(),
-                        "https://example.com/callback".to_string(),
-                    ),
-                    ("code_challenge".to_string(), "codeChallenge".to_string()),
-                    ("code_challenge_method".to_string(), "S256".to_string()),
-                    ("response_type".to_string(), "code".to_string()),
-                    ("state".to_string(), "state".to_string()),
-                    (
-                        "scope".to_string(),
-                        "offline_access openid profile".to_string(),
-                    ),
-                    ("prompt".to_string(), "consent".to_string()),
-                    ("interaction_mode".to_string(), "signUp".to_string()),
+                let params: HashMap<&str, &str> = raw_params
+                    .iter()
+                    .map(|(a, b)| (a.as_str(), b.as_str()))
+                    .collect();
+
+                let expected_params: HashMap<&str, &str> = [
+                    ("client_id", "clientId"),
+                    ("redirect_uri", "https://example.com/callback"),
+                    ("code_challenge", "codeChallenge"),
+                    ("code_challenge_method", "S256"),
+                    ("response_type", "code"),
+                    ("state", "state"),
+                    ("scope", "offline_access openid profile"),
+                    ("prompt", "consent"),
+                    ("interaction_mode", "signUp"),
                 ]
                 .into_iter()
                 .collect();
