@@ -10,11 +10,30 @@ struct TokenByAuthorizationCodeParameters {
     resource: Option<String>,
 }
 
+struct TokenByRefreshTokenParameters {
+    token_endpoint: String,
+    client_id: String,
+    refresh_token: String,
+    resource: Option<String>,
+    scopes: Option<Vec<String>>,
+}
+
+// TODO: refactor this to a generic or something composed?
+
 #[derive(Debug, PartialEq, Deserialize)]
 struct CodeTokenResponse {
     access_token: String,
     refresh_token: Option<String>,
     id_token: String,
+    scope: String,
+    expires_in: i16,
+}
+
+#[derive(Debug, PartialEq, Deserialize)]
+struct RefreshTokenTokenResponse {
+    access_token: String,
+    refresh_token: String,
+    id_token: Option<String>,
     scope: String,
     expires_in: i16,
 }
@@ -41,6 +60,31 @@ async fn fetch_token_by_authorization_code(
         .send()
         .await?
         .json::<CodeTokenResponse>()
+        .await?;
+
+    Ok(response)
+}
+
+async fn fetch_token_by_refresh_token(
+    client: &Client,
+    parameters: TokenByRefreshTokenParameters,
+) -> Result<RefreshTokenTokenResponse, reqwest::Error> {
+    let mut params: Vec<(&str, &str)> = vec![
+        ("client_id", &parameters.client_id),
+        ("refresh_token", &parameters.refresh_token),
+        ("grant_type", "refresh_token"),
+    ];
+
+    if let Some(resource) = &parameters.resource {
+        params.push(("resource", resource));
+    }
+
+    let response = client
+        .post(&parameters.token_endpoint)
+        .form(&params)
+        .send()
+        .await?
+        .json::<RefreshTokenTokenResponse>()
         .await?;
 
     Ok(response)
