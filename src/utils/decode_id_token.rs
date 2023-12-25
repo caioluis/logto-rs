@@ -1,0 +1,85 @@
+use jsonwebtoken::{decode, errors::Error, Algorithm, DecodingKey, Validation};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct IdTokenClaims {
+    sub: String,
+    aud: String,
+    exp: u128,
+    iat: u128,
+    iss: String,
+    at_hash: Option<String>,
+    username: Option<String>,
+    name: Option<String>,
+    avatar: Option<String>,
+}
+
+fn decode_id_token(token: &str) -> Result<IdTokenClaims, Error> {
+    let key = DecodingKey::from_secret(&[]);
+    let mut validation = Validation::new(Algorithm::RS256);
+    validation.validate_aud = false;
+    validation.insecure_disable_signature_validation();
+
+    match decode::<IdTokenClaims>(&token, &key, &validation) {
+        Ok(decoded_token) => Ok(decoded_token.claims),
+        Err(e) => Err(e),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use jsonwebtoken::{encode, EncodingKey, Header};
+    use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn decode_valid_jwt() {
+        use openssl::rsa::Rsa;
+
+        let rsa = Rsa::generate(2048).unwrap();
+
+        let header = Header::new(Algorithm::RS256);
+        let key = EncodingKey::from_rsa_der(&rsa.private_key_to_der().unwrap()[..]);
+
+        let start = SystemTime::now();
+        let since_the_epoch = start
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards");
+
+        let expected_claims = IdTokenClaims {
+            sub: "bar".to_string(),
+            iss: "foo".to_string(),
+            aud: "qux".to_string(),
+            exp: (since_the_epoch + Duration::from_millis(2000)).as_millis(),
+            iat: 1000,
+            at_hash: None,
+            username: None,
+            name: None,
+            avatar: None,
+        };
+
+        let token_str = encode(&header, &expected_claims, &key);
+        match token_str {
+            Ok(token_string) => {
+                let access_token = decode_id_token(&token_string);
+                match access_token {
+                    Ok(claims) => {
+                        assert_eq!(claims, expected_claims)
+                    }
+                    Err(e) => println!("Error:{}", e),
+                }
+            }
+            Err(e) => println!("Error: {}", e),
+        }
+    }
+
+    #[test]
+    fn fail_decode_invalid_jwt() {
+        assert!(decode_id_token("invalidToken").is_err())
+    }
+
+    #[test]
+    fn fail_decode_valid_jwt_wrong_payload() {
+        assert!(decode_id_token("part1.invalidPayload.part3").is_err())
+    }
+}
