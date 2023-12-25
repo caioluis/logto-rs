@@ -6,7 +6,10 @@ edition = "2021"
 license = "AGPL-3.0-or-later"
 
 [dependencies]
+base64 = "0.21.5"
 mockito = "1.2.0"
+rand = "0.8.5"
 reqwest = { version = "0.11.23", features = ["json"] }
 serde = { version = "1.0.193", features = ["derive"] }
+sha256 = "1.4.0"
 tokio = "1.35.1"
