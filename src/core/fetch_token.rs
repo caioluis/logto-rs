@@ -13,7 +13,7 @@ struct TokenByAuthorizationCodeParameters<'a> {
 }
 
 struct TokenByRefreshTokenParameters {
-    token_endpoint: &'static str,
+    token_endpoint: String,
     client_id: &'static str,
     refresh_token: &'static str,
     resource: Option<&'static str>,
@@ -159,6 +159,65 @@ mod tests {
         };
 
         let response = fetch_token_by_authorization_code(&client, params).await;
+
+        match response {
+            Ok(r) => assert_eq!(expected_token_response, r),
+            Err(e) => panic!("Error in fetch_token_by_authorization_code: {}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_fetch_token_by_refresh_token() {
+        let mut server = mockito::Server::new();
+
+        let body_matchers = vec![
+            Matcher::UrlEncoded("client_id".into(), "client_id_value".into()),
+            Matcher::UrlEncoded("refresh_token".into(), "old_refresh_token_value".into()),
+            Matcher::UrlEncoded("resource".into(), "resource_value".into()),
+            Matcher::UrlEncoded("scope".into(), "read register manage".into()),
+            Matcher::UrlEncoded("grant_type".into(), "refresh_token".into()),
+        ];
+
+        server
+            .mock("POST", "/oidc/token")
+            .match_header("content-type", "application/x-www-form-urlencoded")
+            .match_body(Matcher::AllOf(body_matchers))
+            .with_status(201)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                    "access_token": "access_token_value",
+                    "refresh_token": "new_refresh_token_value",
+                    "id_token": "id_token_value",
+                    "scope": "read register manage",
+                    "expires_in": 3600
+                }"#,
+            )
+            .create();
+
+        let url = server.url();
+
+        let expected_token_response = RefreshTokenTokenResponse {
+            access_token: "access_token_value".to_string(),
+            refresh_token: "new_refresh_token_value".to_string(),
+            id_token: Some("id_token_value".to_string()),
+            scope: "read register manage".to_string(),
+            expires_in: 3600,
+        };
+
+        let client = reqwest::Client::new();
+
+        let endpoint = format!("{}/oidc/token", url);
+
+        let params = TokenByRefreshTokenParameters {
+            client_id: "client_id_value",
+            token_endpoint: endpoint,
+            refresh_token: "old_refresh_token_value",
+            scopes: Some(vec!["read", "register", "manage"]),
+            resource: Some("resource_value"),
+        };
+
+        let response = fetch_token_by_refresh_token(&client, params).await;
 
         match response {
             Ok(r) => assert_eq!(expected_token_response, r),
