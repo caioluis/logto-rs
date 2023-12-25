@@ -1,5 +1,5 @@
 use base64::{engine::general_purpose, Engine as _};
-use rand::Rng;
+use rand::distributions::{Alphanumeric, DistString};
 use sha256::digest;
 
 fn generate_code_verifier() -> String {
@@ -15,12 +15,7 @@ fn generate_state() -> String {
 }
 
 fn generate_random_string() -> String {
-    general_purpose::STANDARD.encode(
-        rand::thread_rng()
-            .sample_iter::<char, _>(rand::distributions::Standard)
-            .take(64)
-            .collect::<String>(),
-    )
+    general_purpose::STANDARD.encode(Alphanumeric.sample_string(&mut rand::thread_rng(), 64))
 }
 
 #[cfg(test)]
@@ -33,5 +28,12 @@ mod tests {
         let second_code = generate_code_verifier();
 
         assert_ne!(first_code, second_code)
+    }
+
+    #[test]
+    fn strings_are_shorter_than_128_characters() {
+        let code = generate_code_verifier();
+        println!("{}", code);
+        assert!(code.chars().count() < 128)
     }
 }
