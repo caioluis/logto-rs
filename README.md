@@ -30,7 +30,8 @@ TBD
 
 ## Disclaimers
 - This repo is not an official Logto repo, but it would be nice to be so one day.
-- I based my implementation going back-and-forth with Logto's SDKs in Kotlin, JS and Go. You will see that the code has a lot of similarities taken from those 3 codebases. 
+- I based my implementation going back-and-forth with Logto's SDKs in Kotlin, JS and Go. You will see that the code has a lot of similarities taken from those 3 codebases.
+- **Help is needed and appreciated! This is my first Rust library, so I will be glad to have any feedback and help in organising the code better.**
 - The project is not feature complete. Here is an advanced feature tracking system, also called todo list:
 
 ## SDK Convention
