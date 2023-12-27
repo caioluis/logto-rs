@@ -1,3 +1,4 @@
+use josekit::jwt::JwtPayload;
 use jsonwebtoken::{decode, errors::Error, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 
@@ -18,6 +19,13 @@ pub struct IdTokenClaims {
     pub avatar: Option<String>,
 }
 
+impl IdTokenClaims {
+    pub fn to_payload(&self) -> JwtPayload {
+        let value = serde_json::to_value(self).unwrap();
+        JwtPayload::from_map(value.as_object().unwrap().clone()).unwrap()
+    }
+}
+
 fn decode_id_token(token: &str) -> Result<IdTokenClaims, Error> {
     let key = DecodingKey::from_secret(&[]);
     let mut validation = Validation::new(Algorithm::RS256);
@@ -29,6 +37,8 @@ fn decode_id_token(token: &str) -> Result<IdTokenClaims, Error> {
         Err(e) => Err(e),
     }
 }
+
+// TODO: improve testing add more cases for other types of error
 
 #[cfg(test)]
 mod tests {
