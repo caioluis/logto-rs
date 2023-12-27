@@ -35,22 +35,41 @@ TBD
 - The project is not feature complete. Here is an advanced feature tracking system, also called todo list:
 
 ## SDK Convention
-### Core functions
+### Core
+#### Core functions
   - [x] fetchOidcConfig
   - [x] generateSignInUri
   - [x] generateSignOutUri
   - [x] fetchTokenByAuthorizationCode
   - [x] fetchTokenByRefreshToken
   - [x] revoke
-### Utility functions
+#### Utility functions
   - [x] generateCodeVerifier
   - [x] generateCodeChallenge
   - [x] generateState
   - [x] decodeIdToken
-  - [ ] verifyIdToken
-  - [ ] verifyAndParseCodeFromCallbackUri
-### Types
+  - [x] verifyIdToken
+  - [x] verifyAndParseCodeFromCallbackUri
+#### Types
   - [x] OidcConfigResponse
   - [x] CodeTokenResponse
   - [x] RefreshTokenResponse
   - [x] IdTokenClaims
+### Platform SDK
+#### Basic types
+  - [ ] LogtoConfig
+  - [ ] AccessToken
+#### LogtoClient
+##### Properties
+  - [ ] logtoConfig
+  - [ ] oidcConfig
+  - [ ] accessTokenMap
+  - [ ] refreshToken
+  - [ ] idToken
+##### Methods
+  - [ ] constructor
+  - [ ] isAuthenticated
+  - [ ] SignIn
+  - [ ] SignOut
+  - [ ] getAccessToken
+  - [ ] getIdTokenClaims
