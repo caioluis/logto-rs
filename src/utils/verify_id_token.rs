@@ -17,6 +17,14 @@ struct TokenInfoParameters {
     jwks: JwkSet,
 }
 
+// TODO: I need to find a way with the existent libs to
+// mock the creation of the JWT and the JWK, so that I can
+// be realiable in my testing.
+// So far, I've tried with the following crates, but I haven't managed
+// to find a solution
+//
+// jwt, josekit, jwt-simple, jsonwebtokens, jsonwebtoken_rustcrypto, jsonwebkey, aliri
+
 fn verify_id_token(params: TokenInfoParameters) -> Result<()> {
     let header = decode_header(params.id_token.as_str())?;
 
