@@ -36,3 +36,24 @@ fn verify_and_parse_code_from_callback_uri(
         None => Err("code parameter is missing".into()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::Result;
+
+    #[test]
+    fn test_verify_and_parse_code_from_callback_uri() -> Result<()> {
+        let params = UnverifiedUris {
+            callback_uri: "http://example.com/callback?state=123456&code=abcdef".to_string(),
+            redirect_uri: "http://example.com/redirect".to_string(),
+            state: "123456".to_string(),
+        };
+
+        let result = verify_and_parse_code_from_callback_uri(params).unwrap_or_default();
+
+        assert_eq!(result, "abcdef");
+
+        Ok(())
+    }
+}

@@ -6,6 +6,7 @@ edition = "2021"
 license = "AGPL-3.0-or-later"
 
 [dependencies]
+anyhow = "1.0.77"
 base64 = "0.21.5"
 josekit = "0.8.4"
 jsonwebtoken = "9.2.0"
