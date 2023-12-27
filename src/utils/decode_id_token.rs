@@ -2,16 +2,20 @@ use jsonwebtoken::{decode, errors::Error, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct IdTokenClaims {
-    sub: String,
-    aud: String,
-    exp: u128,
-    iat: u128,
-    iss: String,
-    at_hash: Option<String>,
-    username: Option<String>,
-    name: Option<String>,
-    avatar: Option<String>,
+pub struct IdTokenClaims {
+    pub sub: String,
+    pub aud: String,
+    pub exp: u128,
+    pub iat: u128,
+    pub iss: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub at_hash: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub username: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar: Option<String>,
 }
 
 fn decode_id_token(token: &str) -> Result<IdTokenClaims, Error> {
