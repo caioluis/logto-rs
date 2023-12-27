@@ -4,6 +4,12 @@ name = "logto-rs"
 version = "0.1.0"
 edition = "2021"
 license = "AGPL-3.0-or-later"
+homepage = "https://logto.io/"
+repository = "https://github.com/caioluis/logto-rs"
+description = "🦀 Logto Rust Unofficial SDKs"
+readme = "README.md"
+keywords = ["authentication", "authorization", "sdk", "logto"]
+categories = ["api-bindings"]
 
 [dependencies]
 anyhow = "1.0.77"
