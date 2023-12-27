@@ -11,6 +11,9 @@ readme = "README.md"
 keywords = ["authentication", "authorization", "sdk", "logto"]
 categories = ["api-bindings"]
 
+[lib]
+path = "src/lib.rs"
+
 [dependencies]
 anyhow = "1.0.77"
 base64 = "0.21.5"
