@@ -38,8 +38,6 @@ fn decode_id_token(token: &str) -> Result<IdTokenClaims, Error> {
     }
 }
 
-// TODO: improve testing add more cases for other types of error
-
 #[cfg(test)]
 mod tests {
     use super::*;
