@@ -48,7 +48,7 @@ impl ReservedScopes {
     }
 }
 
-fn with_default_scopes(mut scopes: Option<Vec<&str>>) -> Vec<&str> {
+pub fn with_default_scopes(mut scopes: Option<Vec<&str>>) -> Vec<&str> {
     let default_scopes: Vec<&str> = vec![
         ReservedScopes::OfflineAccess.as_str(),
         ReservedScopes::OpenId.as_str(),
