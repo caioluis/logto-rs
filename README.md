@@ -34,42 +34,51 @@ TBD
 - **Help is needed and appreciated! This is my first Rust library, so I will be glad to have any feedback and help in organising the code better.**
 - The project is not feature complete. Here is an advanced feature tracking system, also called todo list:
 
-## SDK Convention
-### Core
-#### Core functions
-  - [x] fetchOidcConfig
-  - [x] generateSignInUri
-  - [x] generateSignOutUri
-  - [x] fetchTokenByAuthorizationCode
-  - [x] fetchTokenByRefreshToken
-  - [x] revoke
-#### Utility functions
-  - [x] generateCodeVerifier
-  - [x] generateCodeChallenge
-  - [x] generateState
-  - [x] decodeIdToken
-  - [x] verifyIdToken
-  - [x] verifyAndParseCodeFromCallbackUri
-#### Types
-  - [x] OidcConfigResponse
-  - [x] CodeTokenResponse
-  - [x] RefreshTokenResponse
-  - [x] IdTokenClaims
-### Platform SDK
-#### Basic types
-  - [ ] LogtoConfig
-  - [ ] AccessToken
-#### LogtoClient
-##### Properties
-  - [ ] logtoConfig
-  - [ ] oidcConfig
-  - [ ] accessTokenMap
-  - [ ] refreshToken
-  - [ ] idToken
-##### Methods
-  - [ ] constructor
-  - [ ] isAuthenticated
-  - [ ] SignIn
-  - [ ] SignOut
-  - [ ] getAccessToken
-  - [ ] getIdTokenClaims
+### SDK Convention - Core
+| Core                         | Done |
+|-----------------------------|------|
+| fetchOidcConfig             | ✅  |
+| generateSignInUri           | ✅  |
+| generateSignOutUri          | ✅  |
+| fetchTokenByAuthorizationCode | ✅  |
+| fetchTokenByRefreshToken    | ✅  |
+| revoke                      | ✅  |
+
+| Utility functions           | Done |
+|-----------------------------|------|
+| generateCodeVerifier        | ✅  |
+| generateCodeChallenge       | ✅  |
+| generateState               | ✅  |
+| decodeIdToken               | ✅  |
+| verifyIdToken               | ✅  |
+| verifyAndParseCodeFromCallbackUri | ✅  |
+
+| Types                       | Done |
+|-----------------------------|------|
+| OidcConfigResponse          | ✅  |
+| CodeTokenResponse           | ✅  |
+| RefreshTokenResponse        | ✅  |
+| IdTokenClaims               | ✅  |
+
+### SDK Convention - Platform SDK
+| Basic Types                 | Done |
+|-----------------------------|------|
+| LogtoConfig                 | ❌  |
+| AccessToken                 | ❌  |
+
+| LogtoClient Properties      | Done |
+|-----------------------------|------|
+| logtoConfig                 | ❌  |
+| oidcConfig                  | ❌  |
+| accessTokenMap              | ❌  |
+| refreshToken                | ❌  |
+| idToken                     | ❌  |
+
+| LogtoClient Methods         | Done |
+|-----------------------------|------|
+| constructor                 | ❌  |
+| isAuthenticated             | ❌  |
+| SignIn                      | ❌  |
+| SignOut                     | ❌  |
+| getAccessToken              | ❌  |
+| getIdTokenClaims            | ❌  |
